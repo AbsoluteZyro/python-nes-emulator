@@ -1,6 +1,6 @@
-# NES controller
 
-# Button bit positions
+
+
 BTN_A      = 0x80
 BTN_B      = 0x40
 BTN_SELECT = 0x20
@@ -13,8 +13,8 @@ BTN_RIGHT  = 0x01
 
 class Controller:
     def __init__(self):
-        self.state  = 0x00   # current button state
-        self.latch  = 0x00   # latched state on strobe
+        self.state  = 0x00   
+        self.latch  = 0x00   
         self.strobe = False
 
     def write(self, data):

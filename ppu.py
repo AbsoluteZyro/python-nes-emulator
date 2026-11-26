@@ -1,8 +1,5 @@
-# NES PPU (Picture Processing Unit)
-
 from cartridge import MIRROR_HORIZONTAL, MIRROR_VERTICAL, MIRROR_SINGLE_LO, MIRROR_SINGLE_HI
 
-# NES master palette (RGB)
 PALETTE = [
     (84,84,84),(0,30,116),(8,16,144),(48,0,136),(68,0,100),(92,0,48),(84,4,0),(60,24,0),
     (32,42,0),(8,58,0),(0,64,0),(0,60,0),(0,50,60),(0,0,0),(0,0,0),(0,0,0),
@@ -24,22 +21,19 @@ class PPU:
         self.palette = bytearray(32)
         self.oam_addr = 0
 
-        # Internal registers
-        self.v = 0        # current VRAM address (15-bit)
-        self.t = 0        # temp VRAM address (15-bit)
-        self.x = 0        # fine X scroll (3-bit)
-        self.w = 0        # write toggle
+        self.v = 0
+        self.t = 0
+        self.x = 0
+        self.w = 0
 
-        # Control ($2000)
         self.ctrl_nmi        = 0
         self.ctrl_master     = 0
-        self.ctrl_sprite_h   = 0   # 0=8x8, 1=8x16
-        self.ctrl_bg_table   = 0   # background pattern table
-        self.ctrl_spr_table  = 0   # sprite pattern table (8x8 only)
-        self.ctrl_inc        = 0   # VRAM increment (0=+1, 1=+32)
-        self.ctrl_nt         = 0   # base nametable
+        self.ctrl_sprite_h   = 0
+        self.ctrl_bg_table   = 0
+        self.ctrl_spr_table  = 0
+        self.ctrl_inc        = 0
+        self.ctrl_nt         = 0
 
-        # Mask ($2001)
         self.mask_emph_b     = 0
         self.mask_emph_g     = 0
         self.mask_emph_r     = 0
@@ -49,7 +43,6 @@ class PPU:
         self.mask_bg_left    = 0
         self.mask_greyscale  = 0
 
-        # Status ($2002)
         self.stat_vblank     = 0
         self.stat_spr0       = 0
         self.stat_spr_over   = 0
@@ -69,7 +62,6 @@ class PPU:
         self.bg_shift_attr_lo = 0
         self.bg_shift_attr_hi = 0
 
-        # Sprite evaluation
         self.spr_count     = 0
         self.spr_patterns  = [0] * 8
         self.spr_positions = [0] * 8
@@ -80,8 +72,6 @@ class PPU:
         self.frame_ready   = False
         self._data_buf     = 0
         self.total_cycles  = 0
-
-    # ---- Nametable mirroring ----
 
     def _nt_addr(self, addr):
         addr &= 0x0FFF
@@ -95,10 +85,8 @@ class PPU:
             return addr & 0x07FF
         elif m == MIRROR_SINGLE_LO:
             return addr & 0x03FF
-        else:  # SINGLE_HI / FOUR
+        else:  
             return addr & 0x07FF
-
-    # ---- Bus access ----
 
     def ppu_read(self, addr):
         addr &= 0x3FFF
@@ -124,19 +112,17 @@ class PPU:
                 addr &= 0x0F
             self.palette[addr] = data
 
-    # ---- CPU register access ($2000-$2007) ----
-
     def cpu_read(self, addr):
         reg = addr & 7
-        if reg == 2:   # PPUSTATUS
+        if reg == 2:
             data = (self.stat_vblank << 7 | self.stat_spr0 << 6 |
                     self.stat_spr_over << 5) | (self._data_buf & 0x1F)
             self.stat_vblank = 0
             self.w = 0
             return data
-        elif reg == 4: # OAMDATA
+        elif reg == 4:
             return self.oam[self.oam_addr]
-        elif reg == 7: # PPUDATA
+        elif reg == 7:
             data = self._data_buf
             self._data_buf = self.ppu_read(self.v)
             if (self.v & 0x3FFF) >= 0x3F00:
@@ -147,7 +133,7 @@ class PPU:
 
     def cpu_write(self, addr, data):
         reg = addr & 7
-        if reg == 0:   # PPUCTRL
+        if reg == 0:
             self.ctrl_nmi       = (data >> 7) & 1
             self.ctrl_master    = (data >> 6) & 1
             self.ctrl_sprite_h  = (data >> 5) & 1
@@ -156,7 +142,7 @@ class PPU:
             self.ctrl_inc       = (data >> 2) & 1
             self.ctrl_nt        = data & 3
             self.t = (self.t & 0x73FF) | ((data & 3) << 10)
-        elif reg == 1: # PPUMASK
+        elif reg == 1:
             self.mask_emph_b    = (data >> 7) & 1
             self.mask_emph_g    = (data >> 6) & 1
             self.mask_emph_r    = (data >> 5) & 1
@@ -165,12 +151,12 @@ class PPU:
             self.mask_spr_left  = (data >> 2) & 1
             self.mask_bg_left   = (data >> 1) & 1
             self.mask_greyscale = data & 1
-        elif reg == 3: # OAMADDR
+        elif reg == 3:
             self.oam_addr = data
-        elif reg == 4: # OAMDATA
+        elif reg == 4:
             self.oam[self.oam_addr] = data
             self.oam_addr = (self.oam_addr + 1) & 0xFF
-        elif reg == 5: # PPUSCROLL
+        elif reg == 5:
             if self.w == 0:
                 self.t = (self.t & 0x7FE0) | (data >> 3)
                 self.x = data & 7
@@ -178,7 +164,7 @@ class PPU:
             else:
                 self.t = (self.t & 0x0C1F) | ((data & 0x07) << 12) | ((data & 0xF8) << 2)
                 self.w = 0
-        elif reg == 6: # PPUADDR
+        elif reg == 6: 
             if self.w == 0:
                 self.t = (self.t & 0x00FF) | ((data & 0x3F) << 8)
                 self.w = 1
@@ -186,11 +172,11 @@ class PPU:
                 self.t = (self.t & 0x7F00) | data
                 self.v = self.t
                 self.w = 0
-        elif reg == 7: # PPUDATA
+        elif reg == 7: 
             self.ppu_write(self.v, data)
             self.v = (self.v + (32 if self.ctrl_inc else 1)) & 0x7FFF
 
-    # ---- Internal scroll helpers ----
+    
 
     def _inc_scroll_x(self):
         if self.mask_show_bg or self.mask_show_spr:
@@ -224,7 +210,7 @@ class PPU:
         if self.mask_show_bg or self.mask_show_spr:
             self.v = (self.v & ~0x7BE0) | (self.t & 0x7BE0)
 
-    # ---- Background fetch helpers ----
+    
 
     def _fetch_nt(self):
         self.bg_next_id = self.ppu_read(0x2000 | (self.v & 0x0FFF))
@@ -258,7 +244,7 @@ class PPU:
             self.bg_shift_attr_lo = (self.bg_shift_attr_lo << 1) & 0xFFFF
             self.bg_shift_attr_hi = (self.bg_shift_attr_hi << 1) & 0xFFFF
 
-    # ---- Sprite evaluation ----
+    
 
     def _sprite_eval(self):
         self.spr_count = 0
@@ -299,18 +285,18 @@ class PPU:
                 else:
                     self.stat_spr_over = 1
 
-    # ---- Main clock ----
+    
 
     def clock(self):
         self.nmi_output = False
 
         if self.scanline < 240 or self.scanline == 261:
-            # Pre-render scanline: clear vblank/sprite flags
+            
             if self.scanline == 261 and self.cycle == 1:
                 self.stat_vblank = 0
                 self.stat_spr_over = 0
 
-            # Background fetch pipeline
+            
             if (2 <= self.cycle <= 257) or (321 <= self.cycle <= 337):
                 self._update_shifters()
                 phase = (self.cycle - 1) & 7
@@ -332,27 +318,27 @@ class PPU:
                 self._load_bg_shifters()
                 self._transfer_x()
 
-            # Pre-render: copy Y address from T to V
+            
             if self.scanline == 261 and 280 <= self.cycle <= 304:
                 self._transfer_y()
 
-        # Visible scanline: sprite evaluation
+        
         if self.scanline < 240 and self.cycle == 257:
             self._sprite_eval()
 
-        # VBlank
+        
         if self.scanline == 241 and self.cycle == 1:
             self.stat_vblank = 1
             if self.ctrl_nmi:
                 self.nmi_output = True
             self.frame_ready = True
 
-        # Pixel output
+        
         if 0 <= self.scanline < 240 and 1 <= self.cycle <= 256:
             px = self.cycle - 1
             py = self.scanline
 
-            # Background pixel
+            
             bg_pixel = bg_pal = 0
             if self.mask_show_bg:
                 bit = 0x8000 >> self.x
@@ -363,7 +349,7 @@ class PPU:
                 if not self.mask_bg_left and px < 8:
                     bg_pixel = bg_pal = 0
 
-            # Sprite pixel
+            
             spr_pixel = spr_pal = 0
             spr_priority = 0
             spr_is_zero  = False
@@ -383,7 +369,7 @@ class PPU:
                 if not self.mask_spr_left and px < 8:
                     spr_pixel = spr_pal = 0
 
-            # Pixel priority
+            
             if bg_pixel == 0 and spr_pixel == 0:
                 pal_idx = 0
             elif bg_pixel == 0:
@@ -401,7 +387,7 @@ class PPU:
             self.frame_buffer[idx + 1] = color[1]
             self.frame_buffer[idx + 2] = color[2]
 
-        # Advance cycle/scanline
+        
         self.total_cycles += 1
         self.cycle += 1
         if self.cycle > 340:
@@ -410,11 +396,11 @@ class PPU:
             if self.scanline > 261:
                 self.scanline = 0
                 self.frame_odd = not self.frame_odd
-                # Skip cycle 0 on odd frames when rendering
+                
                 if self.frame_odd and (self.mask_show_bg or self.mask_show_spr):
                     self.cycle = 1
 
-    # ---- DMA ----
+    
 
     def dma_write(self, page, bus_read):
         base = page << 8

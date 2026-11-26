@@ -1,4 +1,4 @@
-# NES system bus
+
 
 from ppu import PPU
 from apu import APU
@@ -27,7 +27,7 @@ class Bus:
         self.ppu.stat_vblank = 0
         self.ppu.cycles = 0
 
-    # ---- CPU memory map ----
+    
 
     def cpu_read(self, addr):
         addr &= 0xFFFF
@@ -63,7 +63,7 @@ class Bus:
         elif addr >= 0x4020:
             self.cart.cpu_write(addr, data)
 
-    # ---- Main clock: advances one PPU tick (CPU ticks every 3) ----
+    
 
     def clock(self):
         self.ppu.clock()
@@ -83,7 +83,7 @@ class Bus:
                 self.cpu.clock()
                 self.apu.clock()
 
-        # MMC3 IRQ
+        
         if hasattr(self.cart, 'irq_pending') and self.cart.irq_pending:
             self.cart.irq_pending = False
             self.cpu.irq()

@@ -1,4 +1,4 @@
-# iNES cartridge loader + mapper support
+
 
 MIRROR_HORIZONTAL = 0
 MIRROR_VERTICAL   = 1
@@ -37,7 +37,7 @@ class Cartridge:
             self.chr_rom = bytearray(data[offset: offset + chr_size])
             self.chr_is_ram = False
         else:
-            self.chr_rom = bytearray(8192)  # CHR RAM
+            self.chr_rom = bytearray(8192)  
             self.chr_is_ram = True
 
         if flags6 & 0x08:
@@ -49,7 +49,7 @@ class Cartridge:
 
         self._prg_banks = prg_banks
 
-        # Mapper state
+        
         if self.mapper_id == 1:
             self._mmc1_shift = 0x10
             self._mmc1_ctrl  = 0x0C
@@ -70,7 +70,7 @@ class Cartridge:
             self._mmc3_irq_enable  = False
             self.irq_pending = False
 
-    # ---- CPU PRG bus ----
+    
 
     def cpu_read(self, addr):
         if self.mapper_id == 0:
@@ -80,7 +80,7 @@ class Cartridge:
         elif self.mapper_id == 2:
             return self._uxrom_prg_read(addr)
         elif self.mapper_id == 3:
-            return self._nrom_prg_read(addr)  # CNROM PRG same as NROM
+            return self._nrom_prg_read(addr)  
         elif self.mapper_id == 4:
             return self._mmc3_prg_read(addr)
         return 0
@@ -95,7 +95,7 @@ class Cartridge:
         elif self.mapper_id == 4:
             self._mmc3_write(addr, data)
 
-    # ---- PPU CHR bus ----
+    
 
     def ppu_read(self, addr):
         addr &= 0x1FFF
@@ -112,14 +112,14 @@ class Cartridge:
             addr &= 0x1FFF
             self.chr_rom[addr] = data
 
-    # ---- Mapper 0: NROM ----
+    
 
     def _nrom_prg_read(self, addr):
         if self._prg_banks == 1:
             return self.prg_rom[addr & 0x3FFF]
         return self.prg_rom[addr & 0x7FFF]
 
-    # ---- Mapper 1: MMC1 ----
+    
 
     def _mmc1_prg_read(self, addr):
         ctrl_prg = (self._mmc1_ctrl >> 2) & 3
@@ -174,7 +174,7 @@ class Cartridge:
         else:
             self._mmc1_prg = val
 
-    # ---- Mapper 2: UxROM ----
+    
 
     def _uxrom_prg_read(self, addr):
         n = len(self.prg_rom) // 16384
@@ -184,7 +184,7 @@ class Cartridge:
             idx = ((n - 1) * 16384 + (addr & 0x3FFF)) % len(self.prg_rom)
         return self.prg_rom[idx]
 
-    # ---- Mapper 4: MMC3 ----
+    
 
     def _mmc3_prg_read(self, addr):
         n = len(self.prg_rom) // 8192
@@ -226,7 +226,7 @@ class Cartridge:
                 self._mmc3_chr_mode = (data >> 7) & 1
         elif addr < 0xC000:
             if addr & 1:
-                pass  # PRG RAM protect (ignored)
+                pass  
             else:
                 m = data & 1
                 self.mirror = MIRROR_VERTICAL if m == 0 else MIRROR_HORIZONTAL

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""NES Emulator entry point"""
+
 
 import sys
 import time
@@ -69,7 +68,7 @@ def main():
 
     running = True
     while running:
-        # ---- Events ----
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -86,13 +85,13 @@ def main():
                     port, btn = KEYMAP[event.key]
                     (bus.controller1 if port == 1 else bus.controller2).set_button(btn, False)
 
-        # ---- Run emulator until one frame is ready ----
+        
         while not bus.frame_ready:
             bus.clock()
 
         frame_buf = bus.consume_frame()
 
-        # ---- Render ----
+        
         surface = pygame.surfarray.make_surface(
             np.frombuffer(frame_buf, dtype=np.uint8)
             .reshape((SCREEN_H, SCREEN_W, 3))
@@ -102,13 +101,13 @@ def main():
         screen.blit(scaled, (0, 0))
         pygame.display.flip()
 
-        # ---- Audio ----
+        
         if audio_enabled:
             samples = bus.apu.get_samples()
             if samples:
                 new_s = np.array(samples, dtype=np.float32)
                 audio_buf = np.concatenate([audio_buf, new_s])
-            # Feed audio in chunks
+            
             if len(audio_buf) >= AUDIO_BUF and not channel.get_busy():
                 mono = (audio_buf[:AUDIO_BUF] * 32767).astype(np.int16)
                 audio_buf = audio_buf[AUDIO_BUF:]
@@ -117,7 +116,7 @@ def main():
                 sound = pygame.sndarray.make_sound(chunk)
                 channel.play(sound)
 
-        # ---- Timing ----
+        
         now = time.perf_counter()
         elapsed = now - last_time
         sleep_for = frame_duration - elapsed

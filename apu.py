@@ -1,4 +1,4 @@
-# NES APU - basic implementation with all 5 channels
+
 
 import numpy as np
 
@@ -66,7 +66,7 @@ class Sweep:
         self.period  = 0
         self.shift   = 0
         self.divider = 0
-        self.channel = channel  # 1 or 2 (for ones-complement vs twos-complement)
+        self.channel = channel  
         self.target  = 0
 
     def compute_target(self, timer):
@@ -319,7 +319,7 @@ class APU:
         self.dmc      = DMC(bus_read)
 
         self.frame_counter = 0
-        self.frame_mode    = 0   # 0=4-step, 1=5-step
+        self.frame_mode    = 0   
         self.irq_inhibit   = False
         self.frame_irq     = False
         self.cycles        = 0
@@ -396,7 +396,7 @@ class APU:
         self.pulse2.clock_sweep()
 
     def clock(self):
-        # Clock timers every CPU cycle (triangle) or every other (pulse/noise)
+        
         self.triangle.clock_timer()
         if self.cycles & 1:
             self.pulse1.clock_timer()
@@ -404,7 +404,7 @@ class APU:
             self.noise.clock_timer()
         self.dmc.clock_timer()
 
-        # Frame counter (4-step or 5-step sequencer)
+        
         self.frame_counter += 1
         seq4 = [3729, 7457, 11186, 14915]
         seq5 = [3729, 7457, 11186, 14915, 18641]
@@ -422,7 +422,7 @@ class APU:
             if not self.frame_mode and not self.irq_inhibit:
                 self.frame_irq = True
 
-        # Sample generation
+        
         self.sample_accum += 1.0
         if self.sample_accum >= self.sample_period:
             self.sample_accum -= self.sample_period

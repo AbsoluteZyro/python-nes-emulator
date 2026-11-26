@@ -1,4 +1,4 @@
-# MOS 6502 CPU
+
 
 class CPU:
     def __init__(self, bus):
@@ -8,22 +8,22 @@ class CPU:
         self.y = 0x00
         self.sp = 0xFD
         self.pc = 0x0000
-        # Status flags
-        self.c = 0  # carry
-        self.z = 0  # zero
-        self.i = 1  # interrupt disable
-        self.d = 0  # decimal (unused on NES)
-        self.b = 0  # break
-        self.u = 1  # unused (always 1)
-        self.v = 0  # overflow
-        self.n = 0  # negative
+        
+        self.c = 0  
+        self.z = 0  
+        self.i = 1  
+        self.d = 0  
+        self.b = 0  
+        self.u = 1  
+        self.v = 0  
+        self.n = 0  
 
         self.cycles = 0
         self.total_cycles = 0
         self._acc_mode = False
         self._build_opcode_table()
 
-    # ---- Status register helpers ----
+    
 
     @property
     def status(self):
@@ -45,7 +45,7 @@ class CPU:
         self.z = 1 if (value & 0xFF) == 0 else 0
         self.n = 1 if (value & 0x80) else 0
 
-    # ---- Bus access ----
+    
 
     def read(self, addr):
         return self.bus.cpu_read(addr & 0xFFFF)
@@ -53,7 +53,7 @@ class CPU:
     def write(self, addr, data):
         self.bus.cpu_write(addr & 0xFFFF, data & 0xFF)
 
-    # ---- Stack ----
+    
 
     def push(self, data):
         self.write(0x0100 + self.sp, data & 0xFF)
@@ -63,7 +63,7 @@ class CPU:
         self.sp = (self.sp + 1) & 0xFF
         return self.read(0x0100 + self.sp)
 
-    # ---- Lifecycle ----
+    
 
     def reset(self):
         self.a = self.x = self.y = 0
@@ -110,11 +110,11 @@ class CPU:
                 extra = op(addr, page_crossed)
                 if extra:
                     self.cycles += extra
-            # illegal opcodes treated as NOP
+            
         self.cycles -= 1
         self.total_cycles += 1
 
-    # ---- Addressing modes ----
+    
 
     def IMP(self):
         self._acc_mode = False
@@ -175,7 +175,7 @@ class CPU:
         lo = self.read(self.pc); self.pc = (self.pc + 1) & 0xFFFF
         hi = self.read(self.pc); self.pc = (self.pc + 1) & 0xFFFF
         ptr = (hi << 8) | lo
-        # Hardware page-boundary bug
+        
         if (ptr & 0xFF) == 0xFF:
             addr = (self.read(ptr & 0xFF00) << 8) | self.read(ptr)
         else:
@@ -206,7 +206,7 @@ class CPU:
             offset -= 0x100
         return (self.pc + offset) & 0xFFFF, False
 
-    # ---- Instructions ----
+    
 
     def ADC(self, addr, page):
         data = self.read(addr)
@@ -373,7 +373,7 @@ class CPU:
     def PHA(self, addr, page): self.push(self.a); return 0
 
     def PHP(self, addr, page):
-        self.push(self.status | 0x30)  # B and U both set when pushed by PHP
+        self.push(self.status | 0x30)  
         return 0
 
     def PLA(self, addr, page):
